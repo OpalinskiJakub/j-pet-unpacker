@@ -1,6 +1,8 @@
 #ifndef UNPACKER_H
 #define UNPACKER_H
 
+#include <algorithm>
+#include <bitset>
 #include <fstream>
 #include <iostream>
 #include <queue>
@@ -9,7 +11,6 @@
 #include <string.h>
 #include <unordered_map>
 #include <vector>
-#include <algorithm>
 
 #include "unpacker_types.hpp"
 
@@ -65,7 +66,21 @@ void calculate_time(uint32_t endp_id, std::vector<hit_t>& v,
 
 uint32_t get_ref(const std::vector<hit_t>& v);
 
+uint32_t fix_raw_trigger(uint32_t row_trtigger);
+
 } // namespace unpacker
+
+uint32_t unpacker::fix_raw_trigger(uint32_t row_trtigger){
+  uint32_t most_significant_bits,middle_bits,least_significant_bits;
+  most_significant_bits = (row_trtigger >> 8) & 0xFF;
+  middle_bits = row_trtigger & 0xFF;
+  least_significant_bits = (row_trtigger >> 16) & 0xFF;
+
+
+  uint32_t combined_bits = (most_significant_bits << 16) | (middle_bits << 8) | least_significant_bits;
+  return combined_bits;
+
+};
 
 inline uint32_t unpacker::reverse_DJ(uint32_t sample)
 {
