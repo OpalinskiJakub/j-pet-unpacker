@@ -30,68 +30,53 @@ int main(int argc, char **argv)
 
     unpacker::load_tdc_calib(paths_to_tdc_calib);
 */
+
+    uint32_t previous_counter_number;
+    bool first_iteration = true;
+
+    int total_differences = 0;
+    int differences_over_one = 0;
+    u_int32_t max_difference = 1;
+    int decreasing_count = 0;
+
     int succ = 1;
     while( succ ) {
+
         succ = unpacker::get_time_window( meta_data, original_data, filtered_data, preproc_data, fp );
-        uint32_t combined_bits = unpacker::fix_raw_trigger(meta_data.raw_trigger_id);
-        std::cout<<std::bitset<32>(combined_bits)<<std::endl;
-        /* print original data */
-        //printf("{%02x\n", (meta_data.raw_trigger_id << 8) | (meta_data.raw_trigger_id >> 24));
-        //printf("{%02x\n", meta_data.tw_trigger_id >> 16);
-         //for (auto const &pair: original_data)
-         {
-             //printf("{%02x\n", pair.first);
 
+        uint32_t counter_number = unpacker::fix_raw_trigger(meta_data.raw_trigger_id);
 
-             /*for (auto const &val : pair.second)
-             {
-                 printf("\t%02x (%d, %d, %.0f),\n", val.sample,
-                                                   val.is_falling_edge,
-                                                   val.channel_id,
-                                                   val.time);
-             }*/
-            
-             //printf("}\n");
-         }
+        if(first_iteration){
+          previous_counter_number = counter_number;
+          first_iteration = false;
+        }else{
 
-        // /* print filtered data */
-         /*
-         for (auto const &pair: filtered_data)
-         {
-             printf("{%02x\n", pair.first);
+          uint32_t difference = counter_number - previous_counter_number;
 
-             for (auto const &val : pair.second)
-             {
-                 printf("\t%02x (%d, %d, %.0f),\n", val.sample,
-                                                   val.is_falling_edge,
-                                                   val.channel_id,
-                                                   val.time);
-             }
-            
-             printf("}\n");
-         }
-*/
-        // /* print preproc data */
-         /*
-         for (auto const &pair: preproc_data)
-         {
-             printf("{%02x\n", pair.first);
+          total_differences++;
 
-             for (auto const &val : pair.second)
-             {
-                 printf("\t(%.0f %.0f %d %d),\n", val.lead_time,
-                                             val.tot_time,
-                                             val.strip_id,
-                                             val.multiplicity);
-             }
+          if(difference !=1){
+            differences_over_one++;
+          }
+          if(difference>max_difference){
+            max_difference=difference;
+          }
+          if (counter_number < previous_counter_number) {
+            decreasing_count++;
+          }
 
-             printf("}\n");
-         }
-
-*/    //getchar();
+          previous_counter_number=counter_number;
+        }
 
     }
+
+    double percent_over_one = (double) differences_over_one/total_differences * 100;
+    std::cout << "Percentage of differences greater than 1: " << percent_over_one << "%" << std::endl;
+    std::cout<<"Max difference:"<<max_difference <<std::endl;
+    std::cout << "Number of decreasing counters: " << decreasing_count << std::endl;
+
 
 
     return 0;
 }
+//std::cout<<std::bitset<32>(combined_bits)<<std::endl;
